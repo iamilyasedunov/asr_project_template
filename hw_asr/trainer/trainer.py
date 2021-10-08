@@ -141,7 +141,6 @@ class Trainer(BaseTrainer):
             if batch_idx >= self.len_epoch:
                 break
         log = self.train_metrics.result()
-
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
             log.update(**{"val_" + k: v for k, v in val_log.items()})
@@ -205,7 +204,7 @@ class Trainer(BaseTrainer):
         if self.writer is None:
             return
         predictions = log_probs.cpu().argmax(-1)
-        pred_texts = [self.text_encoder.ctc_decode(p) for p in predictions]
+        pred_texts = [self.text_encoder.ctc_decode(p.numpy()) for p in predictions]
         argmax_pred_texts = [
             self.text_encoder.decode(p)[: int(l)]
             for p, l in zip(predictions, log_probs_length)

@@ -92,7 +92,7 @@
     "monitor": "min val_loss",
     "early_stop": 100,
     "tensorboard": true,
-    "len_epoch": 100,
+    "len_epoch": 1,
     "grad_norm_clip": 10
   }
 }
