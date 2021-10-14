@@ -56,6 +56,8 @@ def main(config):
     optimizer = config.init_obj(config["optimizer"], torch.optim, trainable_params)
     lr_scheduler = config.init_obj(config["lr_scheduler"], torch.optim.lr_scheduler, optimizer)
 
+    valid_data_loader = dataloaders["train"] if config["trainer"]["overfit_on_one_batch"] else dataloaders["val"]
+
     trainer = Trainer(
         model,
         loss_module,
@@ -65,7 +67,7 @@ def main(config):
         config=config,
         device=device,
         data_loader=dataloaders["train"],
-        valid_data_loader=dataloaders["val"],
+        valid_data_loader=valid_data_loader,
         lr_scheduler=lr_scheduler,
         len_epoch=config["trainer"].get("len_epoch", None)
     )

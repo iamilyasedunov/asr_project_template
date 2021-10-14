@@ -21,6 +21,10 @@ DEFAULT_CHECKPOINT_PATH = ROOT_PATH / "default_test_model" / "checkpoint.pth"
 # https://wandb.ai/iamilyasedunov/asr_project/runs/5w4if8ao?workspace=user-iamilyasedunov
 # fresh-river-13
 
+# denim-moon RNNmodel
+
+# drawn-smoke-50 0.0112
+
 def main(config, out_file):
     logger = config.get_logger("test")
 
