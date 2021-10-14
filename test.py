@@ -16,6 +16,11 @@ from hw_asr.utils.parse_config import ConfigParser
 DEFAULT_CHECKPOINT_PATH = ROOT_PATH / "default_test_model" / "checkpoint.pth"
 
 
+# saved/models/default_config/1014_090310/checkpoint-epoch30.pth
+# batch = 20, CER (argmax): 0.027
+# https://wandb.ai/iamilyasedunov/asr_project/runs/5w4if8ao?workspace=user-iamilyasedunov
+# fresh-river-13
+
 def main(config, out_file):
     logger = config.get_logger("test")
 

@@ -21,7 +21,7 @@
 },
   "data": {
     "train": {
-      "batch_size": 1,
+      "batch_size": 20,
       "num_workers": 5,
       "datasets": [
         {
@@ -30,13 +30,13 @@
             "part": "train-clean-100",
             "max_audio_length": 10.0,
             "max_text_length": 200,
-            "limit": 1
+            "limit": 20
           }
         }
       ]
     },
     "val": {
-      "batch_size": 1,
+      "batch_size": 20,
       "num_workers": 5,
       "datasets": [
         {
@@ -45,7 +45,7 @@
             "part": "dev-clean",
             "max_audio_length": 10.0,
             "max_text_length": 200,
-            "limit": 1
+            "limit": 20
           }
         }
       ]
@@ -54,7 +54,7 @@
   "optimizer": {
     "type": "AdamW",
     "args": {
-      "lr": 4e-3
+      "lr": 5e-3
     }
   },
   "loss": {
@@ -79,7 +79,7 @@
     "type": "OneCycleLR",
     "args": {
       "steps_per_epoch": 100,
-      "epochs": 50,
+      "epochs": 500,
       "anneal_strategy": "cos",
       "max_lr": 1e-2,
       "pct_start": 0.2
@@ -94,6 +94,7 @@
     "early_stop": 100,
     "visualize": "wandb",
     "wandb_project": "asr_project",
+    "wandb_key": "2714cab0acf1a2f225d975dfaed50fb269f27ea4",
     "len_epoch": 100,
     "grad_norm_clip": 10
   }

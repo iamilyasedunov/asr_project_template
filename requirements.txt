@@ -11,3 +11,4 @@ datasets
 torch_audiomentations
 editdistance
 matplotlib
+pyctcdecode==0.1.1

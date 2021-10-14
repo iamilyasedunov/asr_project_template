@@ -16,7 +16,8 @@ class ArgmaxWERMetric(BaseMetric):
     def __call__(self, log_probs: Tensor, text: List[str], *args, **kwargs):
         wers = []
         predictions = torch.argmax(log_probs.cpu(), dim=-1)
-        for log_prob_vec, target_text in zip(predictions, text):
+        normalized_text = [self.text_encoder.normalize_text(sentence) for sentence in text]
+        for log_prob_vec, target_text in zip(predictions, normalized_text):
             if hasattr(self.text_encoder, "ctc_decode"):
                 pred_text = self.text_encoder.ctc_decode(log_prob_vec.numpy())
             else:
