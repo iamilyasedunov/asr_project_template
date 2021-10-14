@@ -17,7 +17,6 @@ class TestDataloader(unittest.TestCase):
 
         BS = 3
         batch = collate_fn([ds[i] for i in range(BS)])
-
         self.assertIn("spectrogram", batch)  # torch.tensor
         bs, audio_time_length, feature_length = batch["spectrogram"].shape
         self.assertEqual(bs, BS)

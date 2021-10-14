@@ -100,29 +100,26 @@ class BaseDataset(Dataset):
     ) -> list:
         initial_size = len(index)
         if max_audio_length is not None:
-            exceeds_audio_length = np.array(
-                [bool(el["audio_len"] <= max_audio_length) for el in index]
-            )
+            exceeds_audio_length = np.array([el["audio_len"] for el in index]) >= max_audio_length
             _total = exceeds_audio_length.sum()
             logger.info(
                 f"{_total} ({_total / initial_size:.1%}) records are longer then "
-                f"{max_audio_length} seconds. Excluding them."
+                f"{max_audio_length} seconds. Excluding them "
+                f"{len(index)} audio initial."
             )
         else:
             exceeds_audio_length = False
 
         initial_size = len(index)
-        if max_audio_length is not None:
+        if max_text_length is not None:
 
-            exceeds_text_length = np.array(
-                [
-                    bool(len(BaseTextEncoder.normalize_text(el["text"])) <= max_text_length) for el in index
-                ]
-            )
+            exceeds_text_length = np.array([len(BaseTextEncoder.normalize_text(el["text"]))
+                                            for el in index]) >= max_text_length
             _total = exceeds_text_length.sum()
             logger.info(
                 f"{_total} ({_total / initial_size:.1%}) records are longer then "
-                f"{max_audio_length} characters. Excluding them."
+                f"{max_text_length} characters. Excluding them."
+                f"{len(index)} audio initial."
             )
         else:
             exceeds_text_length = False
@@ -140,4 +137,7 @@ class BaseDataset(Dataset):
             random.seed(42)  # best seed for deep learning
             random.shuffle(index)
             index = index[:limit]
+        logger.info(
+            f"Final len of data {len(index)}({len(index) / initial_size:.1%}) records  from dataset"
+        )
         return index

@@ -13,47 +13,48 @@
     "wave": [],
     "spectrogram": []
   },
-  "arch": {
-    "type": "BaselineModel",
-    "args": {
-      "n_feats": 128,
-      "fc_hidden": 512
-    }
-  },
+    "arch": {
+        "type": "BaselineRNNModel",
+        "args": {
+            "n_feats": 128
+        }
+},
   "data": {
     "train": {
-      "batch_size": 20,
+      "batch_size": 1,
       "num_workers": 5,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
             "part": "train-clean-100",
-            "max_audio_length": 20.0,
-            "max_text_length": 200
+            "max_audio_length": 10.0,
+            "max_text_length": 200,
+            "limit": 1
           }
         }
       ]
     },
     "val": {
-      "batch_size": 20,
+      "batch_size": 1,
       "num_workers": 5,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
             "part": "dev-clean",
-            "max_audio_length": 20.0,
-            "max_text_length": 200
+            "max_audio_length": 10.0,
+            "max_text_length": 200,
+            "limit": 1
           }
         }
       ]
     }
   },
   "optimizer": {
-    "type": "SGD",
+    "type": "AdamW",
     "args": {
-      "lr": 3e-4
+      "lr": 4e-3
     }
   },
   "loss": {
@@ -80,19 +81,20 @@
       "steps_per_epoch": 100,
       "epochs": 50,
       "anneal_strategy": "cos",
-      "max_lr": 4e-3,
+      "max_lr": 1e-2,
       "pct_start": 0.2
     }
   },
   "trainer": {
-    "epochs": 50,
+    "epochs": 500,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,
     "monitor": "min val_loss",
     "early_stop": 100,
-    "tensorboard": true,
-    "len_epoch": 1,
+    "visualize": "wandb",
+    "wandb_project": "asr_project",
+    "len_epoch": 100,
     "grad_norm_clip": 10
   }
 }

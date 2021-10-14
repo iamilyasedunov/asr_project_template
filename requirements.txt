@@ -1,6 +1,6 @@
 torch
 torchvision
-numpy
+numpy==1.19.5
 tqdm
 tensorboard
 
@@ -10,3 +10,4 @@ torchaudio~=0.9.1
 datasets
 torch_audiomentations
 editdistance
+matplotlib
