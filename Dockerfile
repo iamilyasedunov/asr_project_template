@@ -36,4 +36,6 @@ RUN . ~/.bashrc && conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
 
 # Requirements
 COPY requirements.txt /root/requirements.txt
+RUN pip install --upgrade pip
 RUN . ~/.bashrc && pip install -r /root/requirements.txt
+RUN pip install --ignore-installed ruamel.yaml
