@@ -4,7 +4,6 @@ import torch
 from numpy import inf
 
 from hw_asr.base import BaseModel
-from hw_asr.logger import TensorboardWriter
 from hw_asr.logger import get_visualizer
 
 

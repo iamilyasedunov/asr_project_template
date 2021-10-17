@@ -2,7 +2,6 @@ import random
 from random import shuffle
 
 import PIL
-import jiwer
 import torch
 import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
@@ -11,7 +10,7 @@ from tqdm import tqdm
 
 from hw_asr.base import BaseTrainer
 from hw_asr.logger.utils import plot_spectrogram_to_buf
-from hw_asr.metric.utils import calc_cer
+from hw_asr.metric.utils import calc_cer, calc_wer
 from hw_asr.utils import inf_loop, MetricTracker
 from hw_asr.metric.utils import calc_cer, calc_wer
 
@@ -205,13 +204,15 @@ class Trainer(BaseTrainer):
         # TODO: implement logging of beam search results
         if self.writer is None:
             return
-        predictions = log_probs.cpu().argmax(-1)
-        pred_texts = [self.text_encoder.ctc_decode(p.numpy()) for p in predictions]
-        argmax_pred_texts = [
-            self.text_encoder.decode(p)[: int(l)]
-            for p, l in zip(predictions, log_probs_length)
+
+        argmax_inds = log_probs.cpu().argmax(-1)
+        argmax_inds = [
+            inds[: int(ind_len)]
+            for inds, ind_len in zip(argmax_inds, log_probs_length)
         ]
-        tuples = list(zip(pred_texts, text, argmax_pred_texts))
+        argmax_texts_raw = [self.text_encoder.decode(inds) for inds in argmax_inds]
+        argmax_texts = [self.text_encoder.ctc_decode(inds) for inds in argmax_inds]
+        tuples = list(zip(argmax_texts, text, argmax_texts_raw))
         shuffle(tuples)
         to_log_pred = []
         to_log_pred_raw = []

@@ -16,7 +16,7 @@ class BaseModel(nn.Module):
     @abstractmethod
     def forward(self, *args, **kwargs) -> Union[Tensor, dict]:
         """
-        Forward pass logic
+        Forward pass logic.
         Can return a torch.Tensor (it will be interpreted as logits) or a dict.
 
         :return: Model output

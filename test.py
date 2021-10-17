@@ -67,16 +67,18 @@ def main(config, out_file):
             batch["probs"] = batch["log_probs"].exp().cpu()
             batch["argmax"] = batch["probs"].argmax(-1)
             for i in range(len(batch["text"])):
+                argmax = batch["argmax"][i]
+                argmax = argmax[:int(batch["log_probs_length"][i])]
                 results.append(
                     {
                         "ground_trurh": batch["text"][i],
-                        "pred_text_argmax": text_encoder.ctc_decode(batch["argmax"][i]),
+                        "pred_text_argmax": text_encoder.ctc_decode(argmax),
                         "pred_text_beam_search": text_encoder.ctc_beam_search(
-                            batch["probs"], beam_size=100
+                            batch["probs"], batch["log_probs_length"], beam_size=100
                         )[:10],
                     }
                 )
-    with Path(out_file).open('w') as f:
+    with Path(out_file).open("w") as f:
         json.dump(results, f, indent=2)
 
 
@@ -129,7 +131,7 @@ if __name__ == "__main__":
         "--jobs",
         default=1,
         type=int,
-        help="Number of workers for test dataloader"
+        help="Number of workers for test dataloader",
     )
 
     args = args.parse_args()

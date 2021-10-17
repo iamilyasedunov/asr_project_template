@@ -3,7 +3,9 @@ torchvision
 numpy==1.19.5
 tqdm
 tensorboard
+matplotlib
 
+wandb
 pandas
 speechbrain~=0.5.9
 torchaudio~=0.9.1

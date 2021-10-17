@@ -1,4 +1,5 @@
 from datetime import datetime
+
 import numpy as np
 
 
@@ -9,7 +10,7 @@ class WanDBWriter:
 
         try:
             import wandb
-            wandb.login(key=config['trainer'].get('wandb_key'))
+            wandb.login()
 
             if config['trainer'].get('wandb_project') is None:
                 raise ValueError("please specify project name for wandb")
