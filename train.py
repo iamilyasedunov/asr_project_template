@@ -51,10 +51,7 @@ def main(config):
     # build model architecture, then print to console
     model = config.init_obj(config["arch"], module_arch, n_class=len(text_encoder))
     logger.info(model)
-    if config["arch"]["weights"]:
-        checkpoint = torch.load(config["arch"]["weights"])
-        model.load_state_dict(checkpoint["state_dict"])
-        print(f"Model pretrained weights loaded: {config['arch']['weights']}")
+
     # prepare for (multi-device) GPU training
     print(f"n_gpu: {torch.cuda.device_count()}")
     device, device_ids = prepare_device(config["n_gpu"])
@@ -63,6 +60,10 @@ def main(config):
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
+    if config["arch"]["weights"]:
+        checkpoint = torch.load(config["arch"]["weights"])
+        model.load_state_dict(checkpoint["state_dict"])
+        print(f"Model pretrained weights loaded: {config['arch']['weights']}")
     # get function handles of loss and metrics
     loss_module = config.init_obj(config["loss"], module_loss).to(device)
     metrics = [

@@ -77,9 +77,11 @@ class QuartzNet(BaseModel):
         in_channels = c1_block_params["C"]
         for i in range(1, 6):
             block_config = self.model_config["B" + str(i)]
-            self.b_blocks.append(BaseBlock(block_config, in_channels, self.dropout_rate))
-            self.b_blocks_residuals.append(nn.Conv1d(in_channels, block_config["C"], kernel_size=1))
-            in_channels = block_config["C"]
+            num_repeats_block = block_config["S"]
+            for _ in range(num_repeats_block):
+                self.b_blocks.append(BaseBlock(block_config, in_channels, self.dropout_rate))
+                self.b_blocks_residuals.append(nn.Conv1d(in_channels, block_config["C"], kernel_size=1))
+                in_channels = block_config["C"]
         self.b_blocks = nn.ModuleList(self.b_blocks)
         self.b_blocks_residuals = nn.ModuleList(self.b_blocks_residuals)
         self.c2_block = nn.Sequential(
