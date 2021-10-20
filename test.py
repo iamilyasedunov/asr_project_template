@@ -12,6 +12,8 @@ from hw_asr.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
 from hw_asr.trainer import Trainer
 from hw_asr.utils import ROOT_PATH
 from hw_asr.utils.parse_config import ConfigParser
+from hw_asr.metric.utils import calc_cer
+from hw_asr.metric.utils import calc_wer
 
 DEFAULT_CHECKPOINT_PATH = ROOT_PATH / "default_test_model" / "checkpoint.pth"
 
@@ -51,7 +53,8 @@ def main(config, out_file):
     model.eval()
 
     results = []
-
+    cers = {"argmax": [], "bs": []}
+    wers = {"argmax": [], "bs": []}
     with torch.no_grad():
         for batch_num, batch in enumerate(tqdm(dataloaders["test"])):
             batch = Trainer.move_batch_to_device(batch, device)
@@ -66,18 +69,30 @@ def main(config, out_file):
             )
             batch["probs"] = batch["log_probs"].exp().cpu()
             batch["argmax"] = batch["probs"].argmax(-1)
+            batch["bs_predictions"] = text_encoder.ctc_beam_search(batch["log_probs"].cpu())
             for i in range(len(batch["text"])):
                 argmax = batch["argmax"][i]
                 argmax = argmax[:int(batch["log_probs_length"][i])]
+                pred_text_argmax = text_encoder.ctc_decode(argmax.numpy())
                 results.append(
                     {
                         "ground_trurh": batch["text"][i],
-                        "pred_text_argmax": text_encoder.ctc_decode(argmax),
-                        "pred_text_beam_search": text_encoder.ctc_beam_search(
-                            batch["probs"], batch["log_probs_length"], beam_size=100
-                        )[:10],
+                        "pred_text_argmax": pred_text_argmax,
+                        "pred_text_beam_search": batch["bs_predictions"][i],
+                        "wer_argmax": calc_wer(batch["text"][i], pred_text_argmax),
+                        "cer_argmax": calc_cer(batch["text"][i], pred_text_argmax),
+                        "wer_bs": calc_wer(batch["text"][i], batch["bs_predictions"][i]),
+                        "cer_bs": calc_cer(batch["text"][i], batch["bs_predictions"][i]),
                     }
                 )
+    results_dict_of_lists = {
+        field: [result[field] for result in results] for field in results[0]
+    }
+    print(f"WER (argmax): {sum(results_dict_of_lists['wer_argmax']) / len( batch['text'])}")
+    print(f"CER (argmax): {sum(results_dict_of_lists['cer_argmax']) / len( batch['text'])}")
+    print(f"WER (beam s): {sum(results_dict_of_lists['wer_bs']) / len( batch['text'])}")
+    print(f"CER (beam s): {sum(results_dict_of_lists['cer_bs']) / len( batch['text'])}")
+
     with Path(out_file).open("w") as f:
         json.dump(results, f, indent=2)
 
@@ -87,7 +102,7 @@ if __name__ == "__main__":
     args.add_argument(
         "-c",
         "--config",
-        default=None,
+        default="hw_asr/config_test",
         type=str,
         help="config file path (default: None)",
     )
@@ -129,7 +144,7 @@ if __name__ == "__main__":
     args.add_argument(
         "-j",
         "--jobs",
-        default=1,
+        default=5,
         type=int,
         help="Number of workers for test dataloader",
     )
@@ -149,7 +164,7 @@ if __name__ == "__main__":
     # update with addition configs from `args.config` if provided
     if args.config is not None:
         with Path(args.config).open() as f:
-            config.config.upadte(json.load(f))
+            config.config.update(json.load(f))
 
     # if `--test-data-folder` was provided, set it as a default test set
     if args.test_data_folder is not None:
@@ -175,6 +190,6 @@ if __name__ == "__main__":
 
     assert config.config.get("data", {}).get("test", None) is not None
     config["data"]["test"]["batch_size"] = args.batch_size
-    config["data"]["test"]["n_jobs"] = args.n_jobs
+    config["data"]["test"]["n_jobs"] = args.jobs
 
     main(config, args.output)

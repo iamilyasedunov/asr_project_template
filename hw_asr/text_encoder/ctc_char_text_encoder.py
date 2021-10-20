@@ -1,8 +1,10 @@
 from typing import List, Tuple
-
+from multiprocessing import Pool
 import torch
+import kenlm
 
 from hw_asr.text_encoder.char_text_encoder import CharTextEncoder
+from pyctcdecode import build_ctcdecoder
 
 
 class CTCCharTextEncoder(CharTextEncoder):
@@ -16,6 +18,13 @@ class CTCCharTextEncoder(CharTextEncoder):
         for text in alphabet:
             self.ind2char[max(self.ind2char.keys()) + 1] = text
         self.char2ind = {v: k for k, v in self.ind2char.items()}
+        with open("other/librispeech-vocab.txt") as f:
+            unigram_list = [t.lower() for t in f.read().strip().split("\n")]
+
+        kenlm_model_path = "other/lowercase_3-gram.pruned.1e-7.arpa"
+        self.bs_ctc_decoder = build_ctcdecoder([''] + alphabet,
+                                               kenlm_model_path,
+                                               unigram_list)
 
     def ctc_decode(self, inds: List[int]) -> str:
         import re
@@ -24,16 +33,16 @@ class CTCCharTextEncoder(CharTextEncoder):
         text = re.sub(r'\^', r'', chars_with_empty_tok)
         return text
 
-    def ctc_beam_search(self, probs: torch.tensor, probs_length,
-                        beam_size: int = 100) -> List[Tuple[str, float]]:
+    def ctc_beam_search(self, logits: torch.tensor) -> List[str]:
         """
         Performs beam search and returns a list of pairs (hypothesis, hypothesis probability).
         """
 
-        assert len(probs.shape) == 2
-        char_length, voc_size = probs.shape
+        assert len(logits.shape) == 3
+        _, char_length, voc_size = logits.shape
         assert voc_size == len(self.ind2char)
-        hypos = []
-        # TODO: your code here
-        raise NotImplementedError
-        return sorted(hypos, key=lambda x: x[1], reverse=True)
+
+        with Pool(processes=20) as pool:
+            texts = self.bs_ctc_decoder.decode_batch(pool=pool, logits_list=logits.detach().numpy())
+
+        return texts

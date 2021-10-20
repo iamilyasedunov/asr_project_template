@@ -14,3 +14,5 @@ torch_audiomentations
 editdistance
 matplotlib
 pyctcdecode==0.1.1
+torch_optimizer==0.1.0
+#pip install https://github.com/kpu/kenlm/archive/master.zip

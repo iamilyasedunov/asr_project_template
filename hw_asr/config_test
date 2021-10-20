@@ -20,7 +20,7 @@
             "n_feats": 128,
             "model_name": "QuartzNet5x5"
         },
-        "weights": "saved/models/default_config/1020_173122/model_best.pth"
+        "weights": "saved/models/default_config/1020_192931/model_best.pth"
 },
   "data": {
     "train": {
@@ -53,6 +53,21 @@
           "type": "LibrispeechDataset",
           "args": {
             "part": "dev-clean",
+            "max_audio_length": 50.0,
+            "max_text_length": 500
+          }
+        }
+      ]
+    },
+    "test": {
+      "n_jobs": 5,
+      "batch_size": 40,
+      "num_workers": 5,
+      "datasets": [
+        {
+          "type": "LibrispeechDataset",
+          "args": {
+            "part": "test-clean",
             "max_audio_length": 50.0,
             "max_text_length": 500
           }
