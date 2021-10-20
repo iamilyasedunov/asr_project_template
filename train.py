@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 import torch
+import torch_optimizer as optim
 
 import hw_asr.loss as module_loss
 import hw_asr.metric as module_metric
@@ -23,6 +24,20 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
+# {
+#     "type": "BeamSearchWERMetric",
+#     "args": {
+#         "name": "WER (beam_search)"
+#     }
+# },
+# {
+#     "type": "BeamSearchCERMetric",
+#     "args": {
+#         "name": "CER (beam_search)"
+#     }
+# }
+
+# saved/models/default_config/1019_225927/checkpoint-epoch5.pth
 
 def main(config):
     logger = config.get_logger("train")
@@ -36,8 +51,12 @@ def main(config):
     # build model architecture, then print to console
     model = config.init_obj(config["arch"], module_arch, n_class=len(text_encoder))
     logger.info(model)
-
+    if config["arch"]["weights"]:
+        checkpoint = torch.load(config["arch"]["weights"])
+        model.load_state_dict(checkpoint["state_dict"])
+        print(f"Model pretrained weights loaded: {config['arch']['weights']}")
     # prepare for (multi-device) GPU training
+    print(f"n_gpu: {torch.cuda.device_count()}")
     device, device_ids = prepare_device(config["n_gpu"])
     model = model.to(device)
     print(device, device_ids)
@@ -53,7 +72,8 @@ def main(config):
 
     # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = config.init_obj(config["optimizer"], torch.optim, trainable_params)
+    optim_lib = optim if config["optimizer"]["type"] == "NovoGrad" else torch.optim
+    optimizer = config.init_obj(config["optimizer"], optim_lib, trainable_params)
     lr_scheduler = config.init_obj(config["lr_scheduler"], torch.optim.lr_scheduler, optimizer)
 
     valid_data_loader = dataloaders["train"] if config["trainer"]["overfit_on_one_batch"] else dataloaders["val"]

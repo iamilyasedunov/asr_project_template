@@ -49,10 +49,10 @@ class Trainer(BaseTrainer):
         self.valid_data_loader = valid_data_loader
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
-        self.log_step = 10
+        self.log_step = 100
 
         self.train_metrics = MetricTracker(
-            "loss", "grad norm", *[m.name for m in self.metrics], writer=self.writer
+            "loss", "grad norm", *[m.name for m in self.metrics[:2]], writer=self.writer
         )
         self.valid_metrics = MetricTracker(
             "loss", *[m.name for m in self.metrics], writer=self.writer
@@ -136,7 +136,10 @@ class Trainer(BaseTrainer):
             batch["logits"] = outputs
 
         batch["log_probs"] = F.log_softmax(batch["logits"], dim=-1)
-        batch["log_probs_length"] = self.model.transform_input_lengths(
+
+        transform_input_len = self.model.module.transform_input_lengths if self.config["n_gpu"] > 1 else \
+            self.model.transform_input_lengths
+        batch["log_probs_length"] = transform_input_len(
             batch["spectrogram_length"]
         )
         batch["loss"] = self.criterion(**batch)
@@ -148,7 +151,9 @@ class Trainer(BaseTrainer):
                 self.lr_scheduler.step()
 
         metrics.update("loss", batch["loss"].item())
-        for met in self.metrics:
+
+        metrics_upd = self.metrics[:2] if is_train else self.metrics
+        for met in metrics_upd:
             metrics.update(met.name, met(**batch))
         return batch
 
@@ -197,6 +202,8 @@ class Trainer(BaseTrainer):
             text,
             log_probs,
             log_probs_length,
+            logits,
+            part,
             examples_to_log=5,
             *args,
             **kwargs,
@@ -210,20 +217,36 @@ class Trainer(BaseTrainer):
             inds[: int(ind_len)]
             for inds, ind_len in zip(argmax_inds, log_probs_length)
         ]
+
         argmax_texts_raw = [self.text_encoder.decode(inds) for inds in argmax_inds]
         argmax_texts = [self.text_encoder.ctc_decode(inds.numpy()) for inds in argmax_inds]
-        tuples = list(zip(argmax_texts, text, argmax_texts_raw))
+        if part == "train":
+            tuples = list(zip(argmax_texts, text, argmax_texts_raw, text))
+        else:
+            bs_texts = self.text_encoder.ctc_beam_search(log_probs.cpu())
+            tuples = list(zip(argmax_texts, text, argmax_texts_raw, bs_texts))
+            to_log_bs = []
         shuffle(tuples)
         to_log_pred = []
         to_log_pred_raw = []
-        for pred, target, raw_pred in tuples[:examples_to_log]:
+        for pred, target, raw_pred, bs_text in tuples[:examples_to_log]:
             wer = calc_wer(target, pred) * 100
             cer = calc_cer(target, pred) * 100
+            if part != "train":
+                wer_bs = calc_wer(target, bs_text) * 100
+                cer_bs = calc_cer(target, bs_text) * 100
+                to_log_bs.append(
+                    f"true: '{target}' | pred: '{bs_text}' "
+                    f"| wer: {wer_bs:.2f} | cer: {cer_bs:.2f}"
+                )
             to_log_pred.append(
                 f"true: '{target}' | pred: '{pred}' "
                 f"| wer: {wer:.2f} | cer: {cer:.2f}"
             )
             to_log_pred_raw.append(f"true: '{target}' | pred: '{raw_pred}'\n")
+        if part != "train":
+            self.writer.add_text(f"predictions_bs", "< < < < > > > >".join(to_log_bs))
+
         self.writer.add_text(f"predictions", "< < < < > > > >".join(to_log_pred))
         self.writer.add_text(
             f"predictions_raw", "< < < < > > > >".join(to_log_pred_raw)

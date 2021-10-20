@@ -1,5 +1,6 @@
 import logging
 import random
+from operator import itemgetter
 
 import numpy as np
 import torch
@@ -57,12 +58,14 @@ class BaseDataset(Dataset):
         audio_path = data_dict["path"]
         audio_wave = self.load_audio(audio_path)
         audio_wave, audio_spec = self.process_wave(audio_wave)
+        text = data_dict["text"]
+        normalized_text = self.text_encoder.normalize_text(text)
         return {
             "audio": audio_wave,
             "spectrogram": audio_spec,
             "duration": data_dict["audio_len"],
-            "text": data_dict["text"],
-            "text_encoded": self.text_encoder.encode(data_dict["text"]),
+            "text": normalized_text,
+            "text_encoded": self.text_encoder.encode(normalized_text),
             "audio_path": audio_path,
         }
 
