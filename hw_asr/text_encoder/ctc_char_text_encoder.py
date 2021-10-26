@@ -10,18 +10,21 @@ from pyctcdecode import build_ctcdecoder
 class CTCCharTextEncoder(CharTextEncoder):
     EMPTY_TOK = "^"
 
-    def __init__(self, alphabet: List[str]):
+    def __init__(self, alphabet: List[str],
+                 path_to_vocab=None,
+                 kenlm_model_path=None):
         super().__init__(alphabet)
         self.ind2char = {
             0: self.EMPTY_TOK
         }
+        unigram_list = None
         for text in alphabet:
             self.ind2char[max(self.ind2char.keys()) + 1] = text
         self.char2ind = {v: k for k, v in self.ind2char.items()}
-        with open("other/librispeech-vocab.txt") as f:
-            unigram_list = [t.lower() for t in f.read().strip().split("\n")]
-
-        kenlm_model_path = "other/lowercase_3-gram.pruned.1e-7.arpa"
+        if path_to_vocab is not None:
+            with open(path_to_vocab) as f:
+                unigram_list = [t.lower() for t in f.read().strip().split("\n")]
+        # kenlm_model_path = "other/test_clean_normalized.arpa" # lowercase_3-gram.pruned.1e-7.arpa
         self.bs_ctc_decoder = build_ctcdecoder([''] + alphabet,
                                                kenlm_model_path,
                                                unigram_list)

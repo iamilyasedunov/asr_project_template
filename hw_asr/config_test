@@ -1,5 +1,7 @@
 {
   "name": "default_config",
+  "path_to_vocab": "other/librispeech-vocab.txt",
+  "kenlm_model_path": "other/test_clean_normalized.arpa",
   "n_gpu": 1,
   "preprocessing": {
     "sr": 16000,
@@ -20,7 +22,7 @@
             "n_feats": 128,
             "model_name": "QuartzNet5x5"
         },
-        "weights": "saved/models/default_config/1020_192931/model_best.pth"
+        "weights": "saved/models/default_config/1024_163758/model_best.pth"
 },
   "data": {
     "train": {

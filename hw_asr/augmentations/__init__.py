@@ -18,6 +18,7 @@ def from_configs(configs: ConfigParser):
     spec_augs = []
     if "augmentations" in configs.config and "spectrogram" in configs.config["augmentations"]:
         for aug_dict in configs.config["augmentations"]["spectrogram"]:
+            print(aug_dict)
             spec_augs.append(
                 configs.init_obj(aug_dict, hw_asr.augmentations.spectrogram_augmentations)
             )

@@ -29,13 +29,13 @@ class BaseTrainer:
         self.epochs = cfg_trainer["epochs"]
         self.save_period = cfg_trainer["save_period"]
         self.monitor = cfg_trainer.get("monitor", "off")
-
+        print(self.metrics)
         # configuration to monitor model performance and save best
         if self.monitor == "off":
             self.mnt_mode = "off"
             self.mnt_best = 0
         else:
-            self.mnt_mode, self.mnt_metric = self.monitor.split()
+            self.mnt_mode, self.mnt_metric = self.monitor.split(" ", 1)
             assert self.mnt_mode in ["min", "max"]
 
             self.mnt_best = inf if self.mnt_mode == "min" else -inf

@@ -5,10 +5,8 @@ from torch.nn import CTCLoss
 
 class CTCLossWrapper(CTCLoss):
     def forward(self, *args, **kwargs) -> Tensor:
-        log_probs = torch.transpose(kwargs["log_probs"], 0, 1)
-        # print(f"log_probs: {log_probs.shape}")
-        input_lengths = kwargs["log_probs_length"].clip(kwargs["log_probs_length"].min(), log_probs.shape[0])
-        # print(f"log_probs_length: {input_lengths}")
+        log_probs = kwargs["log_probs"].transpose(0, 1)
+        input_lengths = kwargs["log_probs_length"]
         targets = kwargs["text_encoded"]
         target_lengths = kwargs["text_encoded_length"]
 

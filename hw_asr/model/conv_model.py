@@ -73,7 +73,6 @@ class QuartzNet(BaseModel):
             nn.ReLU(),
             nn.Dropout(p=self.dropout_rate),
         )
-        # len = calculate_output_length(self.n_feats, c1_block_params["K"], stride=2, padding=с1_block_padding)
         in_channels = c1_block_params["C"]
         for i in range(1, 6):
             block_config = self.model_config["B" + str(i)]
@@ -109,25 +108,14 @@ class QuartzNet(BaseModel):
         )
 
     def forward(self, spectrogram, *args, **kwargs):
-        #print(f"spectrogram: {spectrogram.transpose(1, 2).shape}")
-        outputs = self.c1_block(spectrogram.transpose(1, 2))
-        #print(f"c1_block: {outputs.shape}")
+        outputs = self.c1_block(spectrogram)
         for block, residual in zip(self.b_blocks, self.b_blocks_residuals):
             outputs = block(outputs) + residual(outputs)
-        #print(f"b_blocks: {outputs.shape}")
         outputs = self.c2_block(outputs)
-        #print(f"c2_block: {outputs.shape}")
         outputs = self.c3_block(outputs)
-        #print(f"c3_block: {outputs.shape}")
         outputs = self.c4_block(outputs)
-        #print(f"c4_block: {outputs.shape}")
 
-
-        #logits = self.base_block(spectrogram.transpose(1, 2))
-        # print(f"logits shape: {logits.shape}")
-        # print(f"calc_shape: {self.calculate_output_length(737, 11)}")
-        #return {"logits": logits.transpose(1, 2)}
         return {"logits": outputs.transpose(1, 2)}
 
     def transform_input_lengths(self, input_lengths):
-        return input_lengths
+        return torch.tensor(input_lengths / 2, dtype=int)

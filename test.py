@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+from string import ascii_lowercase
 
 import torch
 from tqdm import tqdm
@@ -18,20 +19,18 @@ from hw_asr.metric.utils import calc_wer
 DEFAULT_CHECKPOINT_PATH = ROOT_PATH / "default_test_model" / "checkpoint.pth"
 
 
-# saved/models/default_config/1014_090310/checkpoint-epoch30.pth
-# batch = 20, CER (argmax): 0.027
-# https://wandb.ai/iamilyasedunov/asr_project/runs/5w4if8ao?workspace=user-iamilyasedunov
-# fresh-river-13
-
-# denim-moon RNNmodel
-
-# drawn-smoke-50 0.0112
-
 def main(config, out_file):
     logger = config.get_logger("test")
-
+    try:
+        path_to_vocab = config["path_to_vocab"]
+        kenlm_model_path = config["kenlm_model_path"]
+    except KeyError:
+        path_to_vocab = None
+        kenlm_model_path = None
     # text_encoder
-    text_encoder = CTCCharTextEncoder.get_simple_alphabet()
+    text_encoder = CTCCharTextEncoder(alphabet=list(ascii_lowercase + ' '),
+                                      path_to_vocab=path_to_vocab,
+                                      kenlm_model_path=kenlm_model_path)
 
     # setup data_loader instances
     dataloaders = get_dataloaders(config, text_encoder)
@@ -53,8 +52,6 @@ def main(config, out_file):
     model.eval()
 
     results = []
-    cers = {"argmax": [], "bs": []}
-    wers = {"argmax": [], "bs": []}
     with torch.no_grad():
         for batch_num, batch in enumerate(tqdm(dataloaders["test"])):
             batch = Trainer.move_batch_to_device(batch, device)
@@ -88,10 +85,10 @@ def main(config, out_file):
     results_dict_of_lists = {
         field: [result[field] for result in results] for field in results[0]
     }
-    print(f"WER (argmax): {sum(results_dict_of_lists['wer_argmax']) / len( batch['text'])}")
-    print(f"CER (argmax): {sum(results_dict_of_lists['cer_argmax']) / len( batch['text'])}")
-    print(f"WER (beam s): {sum(results_dict_of_lists['wer_bs']) / len( batch['text'])}")
-    print(f"CER (beam s): {sum(results_dict_of_lists['cer_bs']) / len( batch['text'])}")
+    print(f"WER (argmax): {sum(results_dict_of_lists['wer_argmax']) / len(batch['text'])}")
+    print(f"CER (argmax): {sum(results_dict_of_lists['cer_argmax']) / len(batch['text'])}")
+    print(f"WER (beam s): {sum(results_dict_of_lists['wer_bs']) / len(batch['text'])}")
+    print(f"CER (beam s): {sum(results_dict_of_lists['cer_bs']) / len(batch['text'])}")
 
     with Path(out_file).open("w") as f:
         json.dump(results, f, indent=2)

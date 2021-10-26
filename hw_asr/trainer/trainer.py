@@ -86,6 +86,8 @@ class Trainer(BaseTrainer):
         for batch_idx, batch in enumerate(
                 tqdm(self.data_loader, desc="train", total=self.len_epoch)
         ):
+            # if batch_idx < 4636:
+            #     continue
             try:
                 batch = self.process_batch(
                     batch,
@@ -102,7 +104,10 @@ class Trainer(BaseTrainer):
                     continue
                 else:
                     raise e
-            self.train_metrics.update("grad norm", self.get_grad_norm())
+            except IndexError as e:
+                print(str(e))
+                continue
+            self.train_metrics.update("grad norm", self.get_grad_norm(), is_train=True)
             if batch_idx % self.log_step == 0:
                 self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
                 self.logger.debug(
@@ -115,6 +120,7 @@ class Trainer(BaseTrainer):
                 )
                 self._log_predictions(part="train", **batch)
                 self._log_spectrogram(batch["spectrogram"])
+                self._log_audio(batch["audio"])
                 self._log_scalars(self.train_metrics)
             if batch_idx >= self.len_epoch:
                 break
@@ -150,11 +156,11 @@ class Trainer(BaseTrainer):
             if self.lr_scheduler is not None:
                 self.lr_scheduler.step()
 
-        metrics.update("loss", batch["loss"].item())
+        metrics.update("loss", batch["loss"].item(), is_train)
 
         metrics_upd = self.metrics[:2] if is_train else self.metrics
         for met in metrics_upd:
-            metrics.update(met.name, met(**batch))
+            metrics.update(met.name, met(**batch), is_train)
         return batch
 
     def _valid_epoch(self, epoch):
@@ -181,6 +187,7 @@ class Trainer(BaseTrainer):
             self._log_scalars(self.valid_metrics)
             self._log_predictions(part="val", **batch)
             self._log_spectrogram(batch["spectrogram"])
+            self._log_audio(batch["audio"])
 
         # add histogram of model parameters to the tensorboard
         for name, p in self.model.named_parameters():
@@ -256,6 +263,10 @@ class Trainer(BaseTrainer):
         spectrogram = random.choice(spectrogram_batch)
         image = PIL.Image.open(plot_spectrogram_to_buf(spectrogram.cpu().log()))
         self.writer.add_image("spectrogram", ToTensor()(image))
+
+    def _log_audio(self, audio_batch):
+        audio = random.choice(audio_batch)
+        self.writer.add_audio("audio", audio, self.config["preprocessing"]["sr"])
 
     @torch.no_grad()
     def get_grad_norm(self, norm_type=2):

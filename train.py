@@ -39,6 +39,8 @@ np.random.seed(SEED)
 
 # saved/models/default_config/1019_225927/checkpoint-epoch5.pth
 
+# saved/models/default_config/1021_115508/
+
 def main(config):
     logger = config.get_logger("train")
 
@@ -53,17 +55,13 @@ def main(config):
     logger.info(model)
 
     # prepare for (multi-device) GPU training
-    print(f"n_gpu: {torch.cuda.device_count()}")
+    # print(f"Train: {config['arch']['args']['model_name']}")
     device, device_ids = prepare_device(config["n_gpu"])
     model = model.to(device)
     print(device, device_ids)
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
-    if config["arch"]["weights"]:
-        checkpoint = torch.load(config["arch"]["weights"])
-        model.load_state_dict(checkpoint["state_dict"])
-        print(f"Model pretrained weights loaded: {config['arch']['weights']}")
     # get function handles of loss and metrics
     loss_module = config.init_obj(config["loss"], module_loss).to(device)
     metrics = [

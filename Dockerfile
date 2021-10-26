@@ -36,6 +36,9 @@ RUN . ~/.bashrc && conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
 
 # Requirements
 COPY requirements.txt /root/requirements.txt
-RUN pip install --upgrade pip
-RUN . ~/.bashrc && pip install -r /root/requirements.txt
-RUN pip install --ignore-installed ruamel.yaml
+# RUN pip install --upgrade pip
+RUN . ~/.bashrc && pip install --upgrade pip && pip install -r /root/requirements.txt && \
+                                            pip install --ignore-installed ruamel.yaml && \
+                                            pip install https://github.com/kpu/kenlm/archive/master.zip && \
+                                            pip install pyctcdecode==0.1.1
+# RUN pip install --ignore-installed ruamel.yaml
