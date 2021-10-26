@@ -13,8 +13,8 @@ RUN apt-get -y update && \
                        unzip \
                        tmux \
                        tree \
-                       bash-completion
-                       nano \
+                       bash-completion \
+                       nano
 
 # System requirements
 RUN apt-get -y install libsndfile1

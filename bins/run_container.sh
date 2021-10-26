@@ -12,6 +12,7 @@ docker run -it \
     --expose 22 -P \
     --shm-size 8G \
     --runtime=nvidia \
+    -v $PWD/../../:/home/asr_project_template \
     -v /mount/export0:/mount/export0 \
     -v /mount/export2:/mount/export2 \
     -v /mount/export1:/mount/export1 \
